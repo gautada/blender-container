@@ -1,0 +1,135 @@
+
+# You can leave the database_url empty to use the built-in MongoDB server, or you can
+# point Flamenco Manager to an existing MongoDB server.
+#database_url: mongodb://localhost/flamanager
+database_url: mongodb://aarch64-docker.gautier.local:32768/flamanager
+
+# When using the built-in MongoDB server, the database files will be stored
+# in this path. The default value is "./db".
+# NOTE: only use local filesystems, and not a CIFS/Samba/NFS mount.
+#database_path: ./db
+
+# Where Flamenco Manager stores the task logs it receives from Workers.
+# As of Manager version 2.2 it no longer sends the entire log to the Server,
+# but stores them here in full and only sends the last few lines upstream.
+task_logs_path: /tmp/flamenco/logs
+
+# Flamenco Manager listens to incoming connections from workers on this address.
+listen: '0.0.0.0:8080'
+
+# Listen to HTTPS traffic.
+#listen_https: ":8443"
+#
+# Enables Let's Encrypt / ACME to automatically obtain TLS certificates. Do not use in combination
+# with tlskey/tlscert (either you provide your own or you let Let's Encrypt do the work).
+#acme_domain_name: yourhost.yourdomain.nl
+#
+# TLS keys for the built-in HTTP server.
+#tlskey: tls/privkey.pem
+#tlscert: tls/cert.pem
+
+# The URL where the workers can reach this Flamenco Manager.
+own_url: http://192.168.3.108:8083/
+
+flamenco: https://cloud.blender.org/
+manager_id: 1234567899876543212345678
+manager_secret: theworldistheworld
+
+# Enables auto-discovery via UPnP/SSDP. Make sure the device UUID is unique.
+ssdp_discovery: true
+ssdp_device_uuid: 1e97b633-34f6-416f-abbb-853de75e5c57
+
+
+# How often the Manager should ask the Server for new tasks, regardless of how often workers ask.
+download_task_sleep: 5m
+
+# The duration between rechecks when there are no more tasks for workers.
+# If set to 0s, will not throttle at all.
+# If set to -1s, will never check when a worker asks for a task (so only every
+# download_task_sleep interval).
+download_task_recheck_throttle: 10s
+
+# These settings determine the task update batching behaviour. All task updates are batched,
+# and the batch is sent whenever the max interval since the last push has passed, or when
+# the batch is at its maximum size, whichever happens first.
+task_update_push_max_interval: 30s
+task_update_push_max_count: 50
+
+# An empty list of task updates is pushed every `cancel_task_fetch_max_interval`,
+# unless an actual task update push already happened within that time. This controls how
+# fast the Manager can respond to task cancel requests.
+cancel_task_fetch_max_interval: 30s
+
+# When a task has status "active", but it hasn't been touched by a worker in
+# this duration, it will go to state "failed". Being "touched" means that
+# a worker called /may-i-run/{task-id} for this task.
+active_task_timeout_interval: 1m
+
+# When a worker has status "active", but it hasn't been seen in this many seconds, it
+# will go to state "timeout".
+active_worker_timeout_interval: 15m
+
+# Tasks that have been in the local cache (i.e. the 'flamenco_tasks' collection)
+# without being updated for this duration are periodically deleted from the
+# manager's database. If the Server updates them, they will be re-downloaded.
+task_cleanup_max_age: 336h
+
+# Workers that have been offline for this long will automatically be deleted.
+# Set to 0s (the default) to disable this behaviour.
+worker_cleanup_max_age: 0s
+
+# Workers are only cleaned up if they have a status from this list. By default
+# only 'offline' is included, but you can also add 'timeout' if you want to
+# auto-remove timed-out workers as well.
+worker_cleanup_status:
+    - offline
+
+# This many failures (on a given job+task type combination) will ban a worker
+# from that task type on that job. Defaults to 3.
+blacklist_threshold: 3
+
+# When a worker fails a task, it'll be soft-failed and retried by another worker.
+# If this many workers have failed the same task, it won't be retried.
+# (even when there are workers left that could technically retry the task).
+task_fail_after_softfail_count: 3
+
+
+# If set, Flamenco Manager will recursively monitor this path, and show the latest
+# image placed there on the status dashboard.
+# watch_for_latest_image: /path/to/render/outputs
+
+
+variables:
+    blender:
+        darwin: /Users/gast/Downloads/blender-2.80/blender.app/Contents/MacOS/blender --factory-startup
+        linux: /home/sybren/bin/blender --factory-startup
+        windows: c:/data/blender-2.80/blender.exe --factory-startup
+    ffmpeg:
+        darwin: /usr/local/bin/ffmpeg
+        linux: /shared/software/ffmpeg/ffmpeg-flamenco/ffmpeg
+        windows: c:/data/ffmpeg-4.1-win64-static/bin/ffmpeg.exe
+
+
+# Two-way translations of POSIX-style paths.
+path_replacement:
+    render:
+        windows: r:/
+        linux: /render
+        darwin: /Volume/render/
+    job_storage:
+        windows: s:/
+        linux: /shared/
+        darwin: /Volume/shared/
+
+# Example configuration for making it possible to perform test tasks.
+# For more details, see the Flamenco documentation.
+test_tasks:
+    test_blender_render:
+        # The location where the blend file will be placed for the Worker to pick up.
+        job_storage: '{render}/_flamenco/tests/jobs'
+
+        # The location where the Worker will save the rendered frame.
+        render_output: '{render}/_flamenco/tests/renders'
+
+# Name of this Manager shown on the dashboard.
+manager_name: "Flamenco Manager"

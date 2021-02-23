@@ -1,0 +1,3 @@
+#!/bin/sh
+export DOCKER_HOST=amd64-docker.gautier.local
+docker build --tag cicd-flamenco:manager-build --file Dockerfile.manager . --no-cache

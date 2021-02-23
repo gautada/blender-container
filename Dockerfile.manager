@@ -1,0 +1,43 @@
+FROM alpine:3.13 as config-alpine
+
+RUN apk add --no-cache tzdata
+
+RUN cp -v /usr/share/zoneinfo/America/New_York /etc/localtime
+RUN echo "America/New_York" > /etc/timezone
+
+FROM alpine:3.13 as src-flamenco-manager
+
+RUN apk add --no-cache build-base go git python3
+RUN git config --global advice.detachedHead false
+RUN git clone --branch=v2.5 --depth=1 git://git.blender.org/flamenco-manager.git
+WORKDIR /flamenco-manager
+RUN go build -i -v -o flamenco-manager -ldflags="-X main.applicationVersion="  github.com/armadillica/flamenco-manager
+ 
+FROM alpine:edge
+
+EXPOSE 8080
+
+COPY --from=config-alpine /etc/localtime /etc/localtime
+COPY --from=config-alpine /etc/timezone  /etc/timezone
+COPY --from=src-flamenco-manager /flamenco-manager/flamenco-manager /usr/bin/flamenco-manager
+
+COPY flamenco-manager.yaml /home/fmgr/manager/flamenco-manager.yaml 
+
+RUN apk add --no-cache imagemagick
+
+RUN addgroup fmgr \
+ && adduser -D -s /bin/sh -G fmgr fmgr \
+ && echo 'fmgr:fmgr' | chpasswd 
+
+COPY --from=src-flamenco-manager /flamenco-manager/templates /home/fmgr/manager/templates
+COPY --from=src-flamenco-manager /flamenco-manager/static /home/fmgr/manager/static
+COPY --from=src-flamenco-manager /flamenco-manager/shaman /home/fmgr/manager/shaman
+
+RUN chown -R fmgr:fmgr /home/fmgr/*
+
+USER fmgr
+WORKDIR /home/fmgr/manager
+
+ENTRYPOINT ["/usr/bin/flamenco-manager"]
+
+
