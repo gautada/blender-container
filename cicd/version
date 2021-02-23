@@ -1,0 +1,2 @@
+#!/bin/sh
+docker exec -it cicd-blender blender --version | head --lines=1 | cut -d' ' -f2
