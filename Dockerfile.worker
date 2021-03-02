@@ -1,13 +1,37 @@
+# FROM alpine:3.13.2 as flamenco-worker
+# 
+# RUN apk add --no-cache git python3 py3-pip
+# RUN git config --global advice.detachedHead false
+# RUN git clone --branch=v2.5 --depth=1 git://git.blender.org/flamenco-worker.git
+# RUN pip install attrs pyjwt
+# https://github.com/armadillica/flamenco-worker-python
+
+FROM alpine:edge as blender-base
+
+RUN apk add --no-cache tzdata
+ 
+RUN cp -v /usr/share/zoneinfo/America/New_York /etc/localtime
+RUN echo "America/New_York" > /etc/timezone
+
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+RUN apk add --no-cache blender
+
+RUN apk add --no-cache git python3 py3-pip
+RUN git config --global advice.detachedHead false
+RUN git clone --branch=v2.5 --depth=1 git://git.blender.org/flamenco-worker.git
+RUN pip install attrs pyjwt
+
+CMD ["tail", "-f", "/dev/null"]
+
+
+
+
 # FROM alpine:3.13 as config-alpine
 
-# RUN apk add --no-cache tzdata
- 
-# RUN cp -v /usr/share/zoneinfo/America/New_York /etc/localtime
-# RUN echo "America/New_York" > /etc/timezone
 # 
 # FROM alpine:3.13 as src-flamenco-manager
 # 
-# RUN apk add --no-cache build-base go git python3
 # RUN git config --global advice.detachedHead false
 # RUN git clone --branch=v2.5 --depth=1 git://git.blender.org/flamenco-manager.git
 # WORKDIR /flamenco-manager
@@ -31,16 +55,16 @@
 # CMD ["tail", "-f", "/dev/null"]
 
 
-FROM ubuntu:18.04
-
-RUN apt-get update
- 
-RUN DEBIAN_FRONTEND="noninteractive" apt-get install --yes gnupg wget
-RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
-RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-RUN apt-get update
-RUN lsb_release -dc
-RUN DEBIAN_FRONTEND="noninteractive" apt-get install --yes mongodb-org-shell mongodb-org-server mongodb-org-mongos mongodb-org
+# FROM ubuntu:18.04
+# 
+# RUN apt-get update
+#  
+# RUN DEBIAN_FRONTEND="noninteractive" apt-get install --yes gnupg wget
+# RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
+# RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+# RUN apt-get update
+# RUN lsb_release -dc
+# RUN DEBIAN_FRONTEND="noninteractive" apt-get install --yes mongodb-org-shell mongodb-org-server mongodb-org-mongos mongodb-org
 # 
 # RUN add-apt-repository ppa:irie/blender
 # 
@@ -92,36 +116,3 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --yes mongodb-org-shell mon
 # 
 # RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 # RUN apk add --no-cache blender
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# FROM alpine:3.13
-# 
-# RUN apk add --no-cache tzdata
-#  
-# RUN cp -v /usr/share/zoneinfo/America/New_York /etc/localtime
-# RUN echo "America/New_York" > /etc/timezone
-# 
-# RUN apk add alpine-sdk sudo
-# RUN addgroup builder
-# RUN adduser -D -s /bin/sh -G builder builder
-# RUN echo "builder    ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
-# USER builder
-# WORKDIR /home/builder
-# RUN git config --global user.name "Docker Builder"
-# RUN git config --global user.email "your@email.address"
-# 
-# RUN git clone https://gitlab.alpinelinux.org/alpine/aports
-# RUN sudo addgroup builder abuild
-# CMD ["tail", "-f", "/dev/null"]

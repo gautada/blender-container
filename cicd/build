@@ -1,3 +1,19 @@
 #!/bin/sh
 export DOCKER_HOST=amd64-docker.gautier.local
-docker build --tag cicd-flamenco:manager-build --file Dockerfile.manager . --no-cache
+docker build --tag blender:worker-build --file Dockerfile.worker . --no-cache
+docker tag blender:worker-build gautada/blender:worker-2.5
+docker push gautada/blender:worker-2.5
+
+docker build --tag blender:manager-build --file Dockerfile.manager . --no-cache
+docker tag blender:manager-build gautada/blender:manager-2.5-x86
+docker push gautada/blender:manager-2.5-x86
+
+export DOCKER_HOST=aarch64-docker.gautier.local
+docker build --tag blender:manager-build --file Dockerfile.manager . --no-cache
+docker tag blender:manager-build gautada/blender:manager-2.5-arm
+docker push gautada/blender:manager-2.5-arm
+
+docker manifest create gautada/blender:manager-2.5 --ammend gautada/blender:manager-2.5-x86 \
+ --amend gautada/blender:manager-2.5-arm
+docker push gautada/blender:manager-2.5
+
